@@ -1,0 +1,28 @@
+{
+    "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"complexity": {
+				"noForEach": "off"
+			},
+      "style":{
+        "useNodejsImportProtocol":"off",
+        "noNonNullAssertion":"off",
+        "useImportType": "error"
+      },
+      "suspicious":{
+        "noExplicitAny":"off"
+      }
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single"
+		}
+	},
+	"vcs": {
+		"defaultBranch": "main"
+	}
+}

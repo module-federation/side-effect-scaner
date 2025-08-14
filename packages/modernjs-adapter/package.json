@@ -1,0 +1,26 @@
+{
+  "name": "@module-federation/side-effect-modernjs-adapter",
+  "version": "0.0.0",
+  "main": "dist/cjs/index.js",
+  "types": "dist/cjs/index.d.ts",
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "rslib build",
+    "dev": "rslib build --watch"
+  },
+  "dependencies": {
+    "@modern-js/app-tools": "2.68.6",
+    "@modern-js/plugin-v2": "^2.68.6",
+    "@modern-js/utils": "^2.68.6"
+  },
+  "devDependencies": {
+    "@module-federation/side-effect-scanner": "workspace:*",
+    "@rsbuild/core": "^1.4.8",
+    "@rslib/core": "^0.9.1",
+    "@types/css-tree": "^2.3.10",
+    "@types/node": "^16.18.74",
+    "typescript": "5.8.3"
+  }
+}
