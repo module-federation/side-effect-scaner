@@ -1,0 +1,15 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "version": "1.0.0",
+  "owner": {
+    "name": "2heal1",
+    "email": "hanric.zhang@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "side-effect-analyzer",
+      "description": "Side effect analyzer that warns about potential side effects when editing files, including command injection, XSS, and unsafe code patterns",
+      "source": "./plugins/side-effect-analyzer"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "name": "side-effect-analyzer",
+  "version": "1.0.0",
+  "description": "Side effect analyzer that warns about potential side effects when editing files, including command injection, XSS, and unsafe code patterns",
+  "author": {
+    "name": "2heal1",
+    "email": "hanric.zhang@gmail.com"
+  }
+}
