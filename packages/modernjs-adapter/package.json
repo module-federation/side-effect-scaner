@@ -6,6 +6,10 @@
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "rslib build",
     "dev": "rslib build --watch"

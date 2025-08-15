@@ -5,6 +5,12 @@
   "publishConfig": {
     "access": "public"
   },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/module-federation/side-effect-scaner",
