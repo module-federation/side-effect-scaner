@@ -1,5 +1,11 @@
 # @module-federation/side-effect-scanner
 
+## 0.0.1
+
+### Patch Changes
+
+- release 0.0.1
+
 ## 0.0.0
 
 ### Patch Changes
