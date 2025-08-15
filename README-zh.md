@@ -435,3 +435,7 @@ export default {
   },
 };
 ```
+
+## 如何修复副作用
+
+参考 [修复指南](./FIX-GUIDE-zh.md) 进行修复。

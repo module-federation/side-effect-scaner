@@ -36,3 +36,4 @@ test-results/
 
 .swe-agent
 log
+side-effect-report.md

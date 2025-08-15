@@ -18,37 +18,37 @@ npx se-scan --entry src/index.ts
 
 ## CLI Command Reference
 
-| Option                                  | Description                                                                                                                                                     | Default                 |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `-c, --config <path>`                   | Configuration file path                                                                                                                                         | `.serc.ts`              |
-| `-e, --entry <file>`                    | Entry file path - will scan all dependencies starting from this file                                                                                           | `index.ts`              |
-| `-d, --dir <dir>`                       | Specify directory to scan - scans all files in the directory, ideal for complex projects with direct scanning of built output for most accurate results          | -                       |
-| `--max-depth <number>`                  | Maximum dependency resolution depth                                                                                                                             | `Infinity`              |
-| `--alias <aliases>`                     | Path alias configuration, JSON string format e.g. `'{"@":"./src"}'`                                                                                         | `{}`                    |
-| `--compile`                             | Whether to compile entry file                                                                                                                                     | `true`                  |
-| `-o, --output <path>`                   | Output report filename                                                                                                                                            | `side-effect-report.md` |
-| `-f, --format <format>`                 | Output format (md, json, console)                                                                                                                                 | `md`                    |
-| `--ignored-global-vars <vars>`          | Global variables to ignore, comma-separated                                                                                                                         | `''`                    |
-| `-i, --ignore <patterns>`               | File patterns to ignore, comma-separated                                                                                                                            | `webpackChunk_*`        |
-| `-u, --unknown-dir <dir>`               | Unknown directory shown in reports                                                                                                                                 | `dist`                  |
-| `-v, --verbose`                         | Show detailed output                                                                                                                                                | `false`                 |
-| `--exclude-global-selector-after-class` | Exclude global selectors after specified class names                                                                                                                | `true`                  |
-| `--exclude-important-rule`              | Exclude !important rules                                                                                                                                            | `true`                  |
-| `--high-risk-css-property`              | Whether to collect high-risk CSS properties like position: fixed                                                                                                     | `false`                 |
-| `--un-removed-event-listener`           | Whether to collect unremoved event listeners                                                                                                                        | `true`                  |
-| `--anonymous-event-handler`             | Whether to collect anonymous event handlers                                                                                                                         | `true`                  |
-| `--dynamic-element-append`              | Whether to collect dynamic element append events: appendChild                                                                                                      | `false`                 |
-| `--dynamic-element-remove`              | Whether to collect dynamic element remove events: removeChild                                                                                                      | `false`                 |
-| `--dynamic-element-insert`              | Whether to collect dynamic element insert events: insertBefore                                                                                                     | `false`                 |
-| `--untracked-dynamic-element`           | Whether to collect other dynamic element events: createTextNode, innerHTML, outerHTML, insertAdjacentHTML                                                          | `false`                 |
-| `--global-var-declaration`              | Whether to collect global variable declarations                                                                                                                       | `true`                  |
-| `--built-in-override`                   | Whether to collect built-in object overrides                                                                                                                        | `true`                  |
-| `--critical-global-style`               | Whether to collect risky styles for global elements                                                                                                                  | `true`                  |
-| `--global-selector`                     | Whether to collect global scope selectors                                                                                                                             | `true`                  |
-| `--complex-selector`                    | Whether to collect complex selector style rules                                                                                                                      | `false`                 |
-| `--important-declaration`               | Whether to collect !important declaration style rules                                                                                                                | `false`                 |
-| `--duplicate-rule`                      | Whether to collect duplicate style rules                                                                                                                              | `true`                  |
-| `--global-style-side-effect`            | Whether to collect high-risk CSS properties like position: fixed                                                                                                       | `true`                  |
+| Option                                  | Description                                                                                                                                             | Default                 |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
+| `-c, --config <path>`                   | Configuration file path                                                                                                                                 | `.serc.ts`              |
+| `-e, --entry <file>`                    | Entry file path - will scan all dependencies starting from this file                                                                                    | `index.ts`              |
+| `-d, --dir <dir>`                       | Specify directory to scan - scans all files in the directory, ideal for complex projects with direct scanning of built output for most accurate results | -                       |
+| `--max-depth <number>`                  | Maximum dependency resolution depth                                                                                                                     | `Infinity`              |
+| `--alias <aliases>`                     | Path alias configuration, JSON string format e.g. `'{"@":"./src"}'`                                                                                     | `{}`                    |
+| `--compile`                             | Whether to compile entry file                                                                                                                           | `true`                  |
+| `-o, --output <path>`                   | Output report filename                                                                                                                                  | `side-effect-report.md` |
+| `-f, --format <format>`                 | Output format (md, json, console)                                                                                                                       | `md`                    |
+| `--ignored-global-vars <vars>`          | Global variables to ignore, comma-separated                                                                                                             | `''`                    |
+| `-i, --ignore <patterns>`               | File patterns to ignore, comma-separated                                                                                                                | `webpackChunk_*`        |
+| `-u, --unknown-dir <dir>`               | Unknown directory shown in reports                                                                                                                      | `dist`                  |
+| `-v, --verbose`                         | Show detailed output                                                                                                                                    | `false`                 |
+| `--exclude-global-selector-after-class` | Exclude global selectors after specified class names                                                                                                    | `true`                  |
+| `--exclude-important-rule`              | Exclude !important rules                                                                                                                                | `true`                  |
+| `--high-risk-css-property`              | Whether to collect high-risk CSS properties like position: fixed                                                                                        | `false`                 |
+| `--un-removed-event-listener`           | Whether to collect unremoved event listeners                                                                                                            | `true`                  |
+| `--anonymous-event-handler`             | Whether to collect anonymous event handlers                                                                                                             | `true`                  |
+| `--dynamic-element-append`              | Whether to collect dynamic element append events: appendChild                                                                                           | `false`                 |
+| `--dynamic-element-remove`              | Whether to collect dynamic element remove events: removeChild                                                                                           | `false`                 |
+| `--dynamic-element-insert`              | Whether to collect dynamic element insert events: insertBefore                                                                                          | `false`                 |
+| `--untracked-dynamic-element`           | Whether to collect other dynamic element events: createTextNode, innerHTML, outerHTML, insertAdjacentHTML                                               | `false`                 |
+| `--global-var-declaration`              | Whether to collect global variable declarations                                                                                                         | `true`                  |
+| `--built-in-override`                   | Whether to collect built-in object overrides                                                                                                            | `true`                  |
+| `--critical-global-style`               | Whether to collect risky styles for global elements                                                                                                     | `true`                  |
+| `--global-selector`                     | Whether to collect global scope selectors                                                                                                               | `true`                  |
+| `--complex-selector`                    | Whether to collect complex selector style rules                                                                                                         | `false`                 |
+| `--important-declaration`               | Whether to collect !important declaration style rules                                                                                                   | `false`                 |
+| `--duplicate-rule`                      | Whether to collect duplicate style rules                                                                                                                | `true`                  |
+| `--global-style-side-effect`            | Whether to collect high-risk CSS properties like position: fixed                                                                                        | `true`                  |
 
 ## Configuration Options
 
@@ -60,7 +60,7 @@ interface ScanOptions {
   entry?: string;
   dir?: string;
   output?: string;
-  format?: "console" | "json" | "md";
+  format?: 'console' | 'json' | 'md';
   ignore?: Array<string | { file: string; lines?: number[] }>;
   verbose?: boolean;
   maxDepth?: number;
@@ -95,14 +95,14 @@ Configuration files use the `.serc.ts` format.
 ### TypeScript Configuration Example
 
 ```ts
-import { createScanConfig } from "@module-federation/side-effect-scanner";
+import { createScanConfig } from '@module-federation/side-effect-scanner';
 
 export default createScanConfig({
-  entry: "src/index.ts",
-  output: "side-effect-report.md",
-  format: "md",
+  entry: 'src/index.ts',
+  output: 'side-effect-report.md',
+  format: 'md',
   alias: {
-    "@": "./src",
+    '@': './src',
   },
 });
 ```
@@ -181,7 +181,7 @@ module.exports = function myAdapter(scanOptions, adapterOptions = {}) {
     },
     output: {
       distPath: {
-        root: "./.temp-dist",
+        root: './.temp-dist',
       },
     },
     tools: {
@@ -217,7 +217,7 @@ npx se-scan --entry src/index.ts --adapter '["./my-adapter.js", {"enableSourceMa
 
 ```typescript
 // .serc.ts
-import { createScanConfig } from "@module-federation/side-effect-scanner";
+import { createScanConfig } from '@module-federation/side-effect-scanner';
 
 export default createScanConfig({});
 ```
@@ -246,13 +246,13 @@ Use `ignore` option to ignore specific files or specific lines within files.
 
 ```typescript
 // .serc.ts
-import { createScanConfig } from "@module-federation/side-effect-scanner";
+import { createScanConfig } from '@module-federation/side-effect-scanner';
 
 export default createScanConfig({
   ignore: [
-    "src/utils/vendor/**", // Ignore entire directory
-    "src/test/**/*.test.js", // Ignore all test files
-    "src/legacy/old-code.js", // Ignore specific file
+    'src/utils/vendor/**', // Ignore entire directory
+    'src/test/**/*.test.js', // Ignore all test files
+    'src/legacy/old-code.js', // Ignore specific file
   ],
 });
 ```
@@ -261,22 +261,22 @@ export default createScanConfig({
 
 ```typescript
 // .serc.ts
-import { createScanConfig } from "@module-federation/side-effect-scanner";
+import { createScanConfig } from '@module-federation/side-effect-scanner';
 
 export default createScanConfig({
   ignore: [
     // Ignore entire file
-    "src/utils/vendor.js",
+    'src/utils/vendor.js',
 
     // Ignore specific lines in file
     {
-      file: "src/components/legacy.js",
+      file: 'src/components/legacy.js',
       lines: [10, 15, 20, 25], // Ignore lines 10, 15, 20, 25
     },
 
     // Use glob pattern to ignore specific lines in files
     {
-      pattern: "src/styles/*.css",
+      pattern: 'src/styles/*.css',
       lines: [1, 2, 3], // Ignore first 3 lines of CSS files
     },
   ],
@@ -289,11 +289,11 @@ export default createScanConfig({
 
 ```typescript
 // .serc.ts
-import { createScanConfig } from "@module-federation/side-effect-scanner";
+import { createScanConfig } from '@module-federation/side-effect-scanner';
 
 export default createScanConfig({
-  entry: "src/index.js",
-  ignore: ["node_modules/**", "src/vendor/**", "**/*.min.js"],
+  entry: 'src/index.js',
+  ignore: ['node_modules/**', 'src/vendor/**', '**/*.min.js'],
 });
 ```
 
@@ -301,15 +301,15 @@ export default createScanConfig({
 
 ```typescript
 // .serc.ts
-import { createScanConfig } from "@module-federation/side-effect-scanner";
+import { createScanConfig } from '@module-federation/side-effect-scanner';
 
 export default createScanConfig({
-  entry: "src/index.js",
+  entry: 'src/index.js',
   ignore: [
-    "**/*.test.js",
-    "**/*.spec.ts",
+    '**/*.test.js',
+    '**/*.spec.ts',
     {
-      file: "src/utils/debug.js",
+      file: 'src/utils/debug.js',
       lines: [42, 43, 44], // Ignore debug code
     },
   ],
@@ -320,20 +320,20 @@ export default createScanConfig({
 
 ```typescript
 // .serc.ts
-import { createScanConfig } from "@module-federation/side-effect-scanner";
+import { createScanConfig } from '@module-federation/side-effect-scanner';
 
 export default createScanConfig({
-  entry: "src/index.js",
+  entry: 'src/index.js',
   ignore: [
-    "dist/**",
-    "build/**",
-    "src/legacy/**",
+    'dist/**',
+    'build/**',
+    'src/legacy/**',
     {
-      file: "src/components/App.js",
+      file: 'src/components/App.js',
       lines: [100, 101, 102], // Ignore specific initialization code
     },
     {
-      pattern: "src/styles/*.css",
+      pattern: 'src/styles/*.css',
       lines: [1], // Ignore copyright comments in CSS files
     },
   ],
@@ -342,7 +342,7 @@ export default createScanConfig({
 
 #### Notes
 
-1. **Path matching**: Paths can be relative or absolute, supports glob patterns (* and **)
+1. **Path matching**: Paths can be relative or absolute, supports glob patterns (\* and \*\*)
 2. **Line indexing**: Line numbers start from 1
 3. **Priority**: Rules in configuration are matched in order, first matching rule takes effect
 4. **Coexistence with magic comments**: Ignore configuration can be used together with magic comments, magic comments have higher priority
@@ -365,20 +365,20 @@ Ensure your configuration file format is correct:
 
 ```typescript
 // Correct configuration format
-import { createScanConfig } from "@module-federation/side-effect-scanner";
+import { createScanConfig } from '@module-federation/side-effect-scanner';
 
 export default createScanConfig({
-  entry: "src/index.js",
+  entry: 'src/index.js',
   ignore: [
-    "string/path.js", // ✅ Correct: string
+    'string/path.js', // ✅ Correct: string
     {
       // ✅ Correct: object
-      file: "path.js",
+      file: 'path.js',
       lines: [1, 2, 3],
     },
     {
       // ✅ Correct: using pattern
-      pattern: "**/*.test.js",
+      pattern: '**/*.test.js',
       lines: [10, 20],
     },
   ],
@@ -425,7 +425,7 @@ The Scanner exports `CSS_MODULE_LOCAL_IDENT_NAME` constant for configuring CSS M
 Example: Set `output.cssModules.localIdentName` to `${CSS_MODULE_LOCAL_IDENT_NAME}-[local]-[hash:base64:6]`.
 
 ```typescript
-import { CSS_MODULE_LOCAL_IDENT_NAME } from "@module-federation/side-effect-scanner";
+import { CSS_MODULE_LOCAL_IDENT_NAME } from '@module-federation/side-effect-scanner';
 
 export default {
   output: {
@@ -435,3 +435,7 @@ export default {
   },
 };
 ```
+
+## How to fix side effects
+
+Refer to the [Fix Guide](./FIX-GUIDE.md) for specific steps to fix side effects.
