@@ -1,5 +1,11 @@
 # @module-federation/side-effect-scanner
 
+## 0.0.2
+
+### Patch Changes
+
+- chore: update fix guide
+
 ## 0.0.1
 
 ### Patch Changes

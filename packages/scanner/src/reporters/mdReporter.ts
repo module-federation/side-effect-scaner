@@ -550,79 +550,8 @@ export async function generateReport(
 		}
 	}
 
-	const suggestions = [];
-	if (issues.css && issues.css.length > 0) {
-		suggestions.push(`### 🎨 ${i18next.t('css_suggestions_title')}
-
-1. **${i18next.t('css_suggestion_1_title')}**
-   - ${i18next.t('css_suggestion_1_item_1')}
-   - ${i18next.t('css_suggestion_1_item_2')}
-
-2. **${i18next.t('css_suggestion_2_title')}**
-   - ${i18next.t('css_suggestion_2_item_1')}
-   - ${i18next.t('css_suggestion_2_item_2')}
-   - ${i18next.t('css_suggestion_2_item_3')}
-
-3. **${i18next.t('css_suggestion_3_title')}**
-   - ${i18next.t('css_suggestion_3_item_1')}
-   - ${i18next.t('css_suggestion_3_item_2')}`);
-	}
-
-	if (issues.globalVars && issues.globalVars.length > 0) {
-		suggestions.push(`### 🌍 ${i18next.t('global_var_suggestions_title')}
-
-1. **${i18next.t('global_var_suggestion_1_title')}**
-   - ${i18next.t('global_var_suggestion_1_item_1')}
-   - ${i18next.t('global_var_suggestion_1_item_2')}
-
-2. **${i18next.t('global_var_suggestion_2_title')}**
-   - ${i18next.t('global_var_suggestion_2_item_1')}
-   - ${i18next.t('global_var_suggestion_2_item_2')}
-
-3. **${i18next.t('global_var_suggestion_3_title')}**
-   - ${i18next.t('global_var_suggestion_3_item_1')}
-   - ${i18next.t('global_var_suggestion_3_item_2')}`);
-	}
-
-	if (issues.eventListeners && issues.eventListeners.length > 0) {
-		suggestions.push(`### 🎯 ${i18next.t('event_listener_suggestions_title')}
-
-1. **${i18next.t('event_listener_suggestion_1_title')}**
-   - ${i18next.t('event_listener_suggestion_1_item_1')}
-   - ${i18next.t('event_listener_suggestion_1_item_2')}
-
-2. **${i18next.t('event_listener_suggestion_2_title')}**
-   - ${i18next.t('event_listener_suggestion_2_item_1')}
-   - ${i18next.t('event_listener_suggestion_2_item_2')}
-
-3. **${i18next.t('event_listener_suggestion_3_title')}**
-   - ${i18next.t('event_listener_suggestion_3_item_1')}
-   - ${i18next.t('event_listener_suggestion_3_item_2')}`);
-	}
-
-	if (issues.dynamicElements && issues.dynamicElements.length > 0) {
-		suggestions.push(`### 🧩 ${i18next.t('dynamic_element_suggestions_title')}
-
-1. **${i18next.t('dynamic_element_suggestion_1_title')}**
-   - ${i18next.t('dynamic_element_suggestion_1_item_1')}
-   - ${i18next.t('dynamic_element_suggestion_1_item_2')}
-
-2. **${i18next.t('dynamic_element_suggestion_2_title')}**
-   - ${i18next.t('dynamic_element_suggestion_2_item_1')}
-   - ${i18next.t('dynamic_element_suggestion_2_item_2')}
-
-3. **${i18next.t('dynamic_element_suggestion_3_title')}**
-   - ${i18next.t('dynamic_element_suggestion_3_item_1')}
-   - ${i18next.t('dynamic_element_suggestion_3_item_2')}
-
-4. **${i18next.t('dynamic_element_suggestion_4_title')}**
-   - ${i18next.t('dynamic_element_suggestion_4_item_1')}
-   - ${i18next.t('dynamic_element_suggestion_4_item_2')}`);
-	}
-
-	if (suggestions.length > 0) {
-		markdown += `## 💡 ${i18next.t('improvement_suggestions_title')}\n\n${suggestions.join('\n\n---\n\n')}`;
-	}
+	markdown += `## 💡 ${i18next.t('fix_guide')}\n\n`;
+	markdown += `${i18next.t('fix_refer')}\n\n`;
 
 	markdown += `\n\n---\n\n*${i18next.t('generated_at')}：${now.toLocaleString()}*
 *${i18next.t('tool_version')}*
