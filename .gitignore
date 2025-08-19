@@ -34,6 +34,6 @@ test-temp-*
 # ignore directory for artifacts produced by tests
 test-results/
 
-.swe-agent
+.swe-agent/mcp
 log
 side-effect-report.md
