@@ -1,5 +1,11 @@
 # @module-federation/side-effect-scanner
 
+## 0.0.4
+
+### Patch Changes
+
+- chore: set global-style-side-effect as false by default
+
 ## 0.0.3
 
 ### Patch Changes

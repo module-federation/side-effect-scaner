@@ -488,20 +488,20 @@ async function detectGlobalRuleSideEffects(
 	const { asset } = file;
 	const issues: Issue[] = [];
 
-	// // 定义高风险的CSS属性
-	// const highRiskProperties = [
-	// 	'margin',
-	// 	'padding',
-	// 	'width',
-	// 	'height',
-	// 	'display',
-	// 	'position',
-	// 	'background',
-	// 	'color',
-	// 	'font-family',
-	// 	'font-size',
-	// 	'border',
-	// ];
+	// 定义高风险的CSS属性
+	const highRiskProperties = [
+		'margin',
+		'padding',
+		'width',
+		'height',
+		'display',
+		'position',
+		'background',
+		'color',
+		'font-family',
+		'font-size',
+		'border',
+	];
 
 	// 检查全局规则
 	if (file.ast.globalRules) {
@@ -525,59 +525,59 @@ async function detectGlobalRuleSideEffects(
 			// Check each global rule style declarations
 			if (rule.declarations) {
 				for (const declaration of rule.declarations) {
-					// const property = declaration.property.toLowerCase();
-					// const value = declaration.value.toLowerCase().trim();
+					const property = declaration.property.toLowerCase();
+					const value = declaration.value.toLowerCase().trim();
 
-					// // 检查高风险属性
-					// if (
-					// 	options.globalStyleSideEffect &&
-					// 	highRiskProperties.includes(property)
-					// ) {
-					// 	let severity = 'warning' as 'warning' | 'error';
-					// 	let message = i18next.t('css_issue_global_style_side_effect', {
-					// 		selector: rule.selectors?.join(', ') || '',
-					// 		property: declaration.property,
-					// 		value: declaration.value,
-					// 	});
+					// 检查高风险属性
+					if (
+						options.globalStyleSideEffect &&
+						highRiskProperties.includes(property)
+					) {
+						let severity = 'warning' as 'warning' | 'error';
+						let message = i18next.t('css_issue_global_style_side_effect', {
+							selector: rule.selectors?.join(', ') || '',
+							property: declaration.property,
+							value: declaration.value,
+						});
 
-					// 	// particularly dangerous style
-					// 	if (
-					// 		(property === 'display' && value === 'none') ||
-					// 		(property === 'position' &&
-					// 			['absolute', 'fixed'].includes(value)) ||
-					// 		(property === 'width' && value === '100vw') ||
-					// 		(property === 'height' && value === '100vh')
-					// 	) {
-					// 		severity = 'error';
-					// 		message = i18next.t('css_issue_global_style_side_effect_severe', {
-					// 			selector: rule.selectors?.join(', ') || '',
-					// 			property: declaration.property,
-					// 			value: declaration.value,
-					// 		});
-					// 	}
+						// particularly dangerous style
+						if (
+							(property === 'display' && value === 'none') ||
+							(property === 'position' &&
+								['absolute', 'fixed'].includes(value)) ||
+							(property === 'width' && value === '100vw') ||
+							(property === 'height' && value === '100vh')
+						) {
+							severity = 'error';
+							message = i18next.t('css_issue_global_style_side_effect_severe', {
+								selector: rule.selectors?.join(', ') || '',
+								property: declaration.property,
+								value: declaration.value,
+							});
+						}
 
-					// 	issues.push(
-					// 		normalizeHtmlIssue(
-					// 			{
-					// 				type: 'global_style_side_effect',
-					// 				severity,
-					// 				message,
-					// 				selector: rule.selectors?.join(', ') || '',
-					// 				property: declaration.property,
-					// 				value: declaration.value,
-					// 				file: normalizeIssueFilePath({
-					// 					file,
-					// 					options,
-					// 					locSource: loc?.source,
-					// 				}),
-					// 				position: loc,
-					// 				code: loc?.actualCode,
-					// 				source: loc?.source,
-					// 			},
-					// 			file,
-					// 		),
-					// 	);
-					// }
+						issues.push(
+							normalizeHtmlIssue(
+								{
+									type: 'global_style_side_effect',
+									severity,
+									message,
+									selector: rule.selectors?.join(', ') || '',
+									property: declaration.property,
+									value: declaration.value,
+									file: normalizeIssueFilePath({
+										file,
+										options,
+										locSource: loc?.source,
+									}),
+									position: loc,
+									code: loc?.actualCode,
+									source: loc?.source,
+								},
+								file,
+							),
+						);
+					}
 
 					// Check !important declarations
 					if (declaration.important && options.importantDeclaration) {

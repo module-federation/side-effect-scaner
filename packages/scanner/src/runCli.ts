@@ -102,7 +102,7 @@ export async function runCli() {
 		.option(
 			'--global-style-side-effect',
 			i18next.t('cli_global_style_side_effect'),
-			true,
+			false,
 		)
 		.parse(process.argv);
 

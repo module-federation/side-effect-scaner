@@ -48,7 +48,7 @@ npx se-scan --entry src/index.ts
 | `--complex-selector`                    | Whether to collect complex selector style rules                                                                                                         | `false`                 |
 | `--important-declaration`               | Whether to collect !important declaration style rules                                                                                                   | `false`                 |
 | `--duplicate-rule`                      | Whether to collect duplicate style rules                                                                                                                | `true`                  |
-| `--global-style-side-effect`            | Whether to collect high-risk CSS properties like position: fixed                                                                                        | `true`                  |
+| `--global-style-side-effect`            | Whether to collect high-risk CSS properties like position: fixed                                                                                        | `false`                 |
 
 ## Configuration Options
 

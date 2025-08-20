@@ -48,7 +48,7 @@ npx se-scan --entry src/index.ts
 | `--complex-selector`                    | 是否收集具有复杂选择器的样式规则                                                                                 | `false`                 |
 | `--important-declaration`               | 是否收集设置了 !important 声明的样式规则                                                                         | `false`                 |
 | `--duplicate-rule`                      | 是否收集重复定义的样式规则                                                                                       | `true`                  |
-| `--global-style-side-effect`            | 是否收集高风险的 CSS 属性，例如 position: fixed                                                                  | `true`                  |
+| `--global-style-side-effect`            | 是否收集高风险的 CSS 属性，例如 position: fixed                                                                  | `false`                 |
 
 ## 配置选项
 

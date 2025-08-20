@@ -36,7 +36,8 @@ tools: bash, grep, read_file, ls, webinfra, edit_file, multi_edit, write_file, w
 1. 前置检查(连通性与配置):
 
 - 使用 bash 工具，安装 @module-federation/side-effect-scanner 工具
-  - 使用 bash 工具，执行 se-scan -h 检查是否已经安装，若没有安装，在全局安装 @module-federation/side-effect-scanner
+  - 使用 bash 工具，执行 npm view @module-federation/side-effect-scanner dist-tags.latest 获取最新版本
+  - 使用 bash 工具，执行 se-scan --version 检查是否已安装最新版本，若没有安装，在全局安装 @module-federation/side-effect-scanner@latest
   - 使用 webinfra 和 read_file 、 edit_file 工具，检测并修改构建配置
     - 检查是否生成 Sourcemap，并且 Sourcemap 格式需要为 `source-map`
     - 检测是否设置了 Sourcemap 文件模板，需要设置 `output.devtoolModuleFilenameTemplate` 为 `[resource-path]`

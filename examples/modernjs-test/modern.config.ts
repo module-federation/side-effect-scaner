@@ -10,9 +10,4 @@ export default defineConfig({
 			bundler: 'rspack', // Set to 'webpack' to enable webpack
 		}),
 	],
-	output: {
-		cssModules: {
-			localIdentName: 'CSS_MODULE_LOCAL_IDENT_NAME-[local]-[hash:base64:6]',
-		},
-	},
 });
