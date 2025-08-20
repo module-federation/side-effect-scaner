@@ -1,6 +1,6 @@
 ---
 name: side-effect-analyzer-agent
-description: 检测项目副作用问题，包含 CSS 副作用，全局变量副作用，事件监听器副作用检测，并能够根据用户需求修复副作用问题。
+description: 当用户需要检测项目副作用或者修复副作用时可以使用该 sub agent 问题，包含 CSS 副作用，全局变量副作用，事件监听器副作用检测，并能够根据用户需求修复副作用问题。里面包含修复规则，需要遵守里面定义的规则来修复副作用。
 tools: bash, grep, read_file, ls, webinfra, edit_file, multi_edit, write_file, web_fetch
 ---
 
@@ -25,9 +25,13 @@ tools: bash, grep, read_file, ls, webinfra, edit_file, multi_edit, write_file, w
 
 ## 工作流程
 
-如果用户没有明确说明要修复问题，那么就只做**检测行为**，不做**修复行为**。
+- 如果用户没有明确说明要修复问题，那么就只做[检测](#检测方式)，不做[修复](#修复方式)。
 
-### 检测行为
+- 如果用户明确只要做[修复](#修复方式)，那就只做[修复](#修复方式)，不要重复执行[检测](#检测方式)。
+
+- 如果用户明确既要[检测](#检测方式)，又要[修复](#修复方式)，那么就先执行[检测](#检测方式)，然后再执行[修复](#修复方式)。
+
+### 检测方式
 
 1. 前置检查(连通性与配置):
 
@@ -54,11 +58,16 @@ tools: bash, grep, read_file, ls, webinfra, edit_file, multi_edit, write_file, w
 - 输出基于证据的结论与可执行优化建议,给到外部用户优化措施和建议
 - 输出扫描报告路径，方便用户查看详细报告
 
-### 修复行为
+下面是实际副作用的优化建议，重要！！！返回给用户
+**将下面修复要求总结返回给最终的回答中，方便后续修复时能够遵从下面的规则**
+
+4. 还原前置检查中设置的构建配置
+
+### 修复方式
 
 1. 使用 read_file 工具，读取报告文件（默认为 `side-effect-report.md`）内容，如果不存在或者生成时间大于 5 分钟，那么先执行**检测行为**
 2. 确认用户修复要求，比如只修复指定的问题种类、或者只修复指定的文件类型，默认全部修复
-3. 根据[修复准则](https://lf3-static.bytednsdoc.com/obj/eden-cn/shloeh7nuhonuhog/FIX-GUIDE-zh.md)，修复副作用
+3. 使用 web_fetch 工具获取 https://lf3-static.bytednsdoc.com/obj/eden-cn/shloeh7nuhonuhog/FIX-GUIDE-zh.md ，修复副作用
 4. 使用 write_file 工具输出**修复报告**（side-effect-fix.md）到当前目录（process.cwd()）
 
 修复报告内容格式如下:
