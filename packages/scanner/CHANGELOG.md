@@ -1,5 +1,11 @@
 # @module-federation/side-effect-scanner
 
+## 0.0.3
+
+### Patch Changes
+
+- chore: remove detect global_style_side_effect
+
 ## 0.0.2
 
 ### Patch Changes
