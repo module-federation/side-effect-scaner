@@ -43,7 +43,7 @@ export async function runCli() {
 		.option(
 			'--ignored-global-vars <vars>',
 			i18next.t('cli_ignored_global_vars'),
-			'webpackChunk_*',
+			'webpackChunk_*,chunkLoadingGlobal',
 		)
 		.option(
 			'--exclude-global-selector-after-class',

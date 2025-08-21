@@ -1,5 +1,11 @@
 # @module-federation/side-effect-scanner
 
+## 0.0.5
+
+### Patch Changes
+
+- fix: ignore chunkLoadingGlobal by default
+
 ## 0.0.4
 
 ### Patch Changes

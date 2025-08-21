@@ -92,6 +92,7 @@ function generateCssIssuesMarkdown(
 function generateGlobalVarIssuesMarkdown(
 	issues: Issue[] | null,
 	level = 4,
+	showSource=false
 ): {
 	markdown: string;
 	issueTypes: Set<string>;
@@ -122,6 +123,9 @@ function generateGlobalVarIssuesMarkdown(
 				details += ` \`${issue.varName}\``;
 			}
 			markdown += `- ${pos}: ${issue.message}${details}\n`;
+			if (showSource && issue.source && issue.source !== 'unknown') {	
+				markdown += `\nSource: ${issue.source}\n`;
+			}
 			if ('code' in issue && issue.code) {
 				markdown += `\n\`\`\`javascript\n${issue.code}\n\`\`\`\n`;
 			}
@@ -507,6 +511,7 @@ export async function generateReport(
 				generateGlobalVarIssuesMarkdown(
 					fileIssues.globalVars,
 					headingLevel + 1,
+					isThirdParty
 				);
 			const {
 				markdown: eventListenerMarkdown,
