@@ -37,10 +37,10 @@ tools: bash, grep, read_file, ls, webinfra, edit_file, multi_edit, write_file, w
 
 - 使用 bash 工具，安装 @module-federation/side-effect-scanner 工具
   - 使用 bash 工具，执行 npm view @module-federation/side-effect-scanner dist-tags.latest 获取最新版本
-  - 使用 bash 工具，执行 se-scan --version 检查是否已安装最新版本，若没有安装，在全局安装 @module-federation/side-effect-scanner@latest
+  - 使用 bash 工具，执行 se-scan --version 检查是否已安装最新版本。若没有安装最新版本，在全局安装 @module-federation/side-effect-scanner@latest
   - 使用 webinfra 和 read_file 、 edit_file 工具，检测并修改构建配置
-    - 检查是否生成 Sourcemap，并且 Sourcemap 格式需要为 `source-map`
-    - 检测是否设置了 Sourcemap 文件模板，需要设置 `output.devtoolModuleFilenameTemplate` 为 `[resource-path]`
+    - 检测是否设置了 Sourcemap 文件模板，需要设置 `output.devtoolModuleFilenameTemplate` 为 `[resource-path]`。 注意：Rsbuild/EdenX/Modern.js 项目需要根据当前项目的 bundler 来设置对应的 `tools.rspack` 或者 `tools.webpack`
+    - Rsbuild/EdenX/Modern.js 项目需要设置 `output.sourceMap` 为 `true`
     - Rsbuild/EdenX/Modern.js 项目需要设置 `tools.lightningcssLoader` 为 `false`
     - Rsbuild/EdenX/Modern.js 项目需要设置 `output.legalComments` 为 `'none'`
     - Rsbuild/EdenX/Modern.js 项目需要设置 `output.cssModules.localIdentName` 为 `CSS_MODULE_LOCAL_IDENT_NAME-[local]-[hash:base64:6]`
@@ -68,8 +68,9 @@ tools: bash, grep, read_file, ls, webinfra, edit_file, multi_edit, write_file, w
 
 1. 使用 read_file 工具，读取报告文件（默认为 `side-effect-report.md`）内容，如果不存在或者生成时间大于 5 分钟，那么先执行**检测行为**
 2. 确认用户修复要求，比如只修复指定的问题种类、或者只修复指定的文件类型，默认全部修复
-3. 使用 web_fetch 工具获取 https://lf3-static.bytednsdoc.com/obj/eden-cn/shloeh7nuhonuhog/FIX-GUIDE-zh.md ，修复副作用
-4. 使用 write_file 工具输出**修复报告**（side-effect-fix.md）到当前目录（process.cwd()）
+3. 使用 web_fetch 工具获取修复规则 https://lf3-static.bytednsdoc.com/obj/eden-cn/shloeh7nuhonuhog/FIX-GUIDE-zh.md
+4. 根据修复规则依次修复报告文件中有副作用问题的文件
+5. 使用 write_file 工具输出**修复报告**（side-effect-fix.md）到当前目录（process.cwd()）
 
 修复报告内容格式如下:
 
@@ -81,8 +82,17 @@ tools: bash, grep, read_file, ls, webinfra, edit_file, multi_edit, write_file, w
 ### {修复类型}
 
 {修复方式}
+
+## {未修复文件}
+
+### {未修复类型}
+
+{未修复原因}
 ```
 
 - 修复类型：全局变量、事件监听、CSS 副作用
+- 未修复类型：全局变量、事件监听、CSS 副作用
 - 修复文件：文件路径
+- 未修复文件：文件路径
 - 修复方式：写清为什么要这样修复，判断的原因是什么。比如删除全局变量 k ，是因为扫描文件发现没有使用过 k 这个变量，因此可以移除。
+- 未修复原因：写清为什么没有修复，判断的原因是什么。比如全局变量 k 被使用了，因此不能移除。或者某个文件不能定位源文件，因此无法修复。
