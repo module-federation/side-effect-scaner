@@ -8,9 +8,12 @@ import {
 	createElement,
 } from '@module-federation/side-effect-pkg';
 import React, { useEffect } from 'react';
+import { setExternal } from '../utils/setExternal';
 
-// @ts-ignore
-window.kkk = 3;
+setExternal();
+
+// @ts-ignore test
+window.kkk = 1;
 
 // 使用 append 方法直接添加元素到 DOM
 appendLinkTag(
