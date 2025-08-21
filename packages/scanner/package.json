@@ -1,6 +1,6 @@
 {
   "name": "@module-federation/side-effect-scanner",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "main": "./dist/cjs/index.js",
   "publishConfig": {
     "access": "public"
@@ -36,12 +36,11 @@
     "chalk": "3.0.0",
     "commander": "^14.0.0",
     "css-tree": "3.1.0",
-    "domhandler": "5.0.3",
     "find-pkg": "2.0.0",
-    "htmlparser2": "10.0.0",
     "i18next": "^25.3.4",
     "i18next-fs-backend": "^2.6.0",
-    "source-map": "^0.7.4"
+    "source-map": "^0.7.4",
+    "parse5": "8.0.0"
   },
   "devDependencies": {
     "@rslib/core": "^0.9.1",

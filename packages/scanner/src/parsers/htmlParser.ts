@@ -1,5 +1,5 @@
-import type { Document, Element, Node, Text } from 'domhandler';
-import { parseDocument } from 'htmlparser2';
+import type { DefaultTreeAdapterMap } from 'parse5';
+import { parse as parseHtml } from 'parse5';
 import type { HTMLLocation } from '@/types/common';
 import type { ScanOptions } from '@/types/config';
 import type { ExtractedCssInfo } from '@/types/css';
@@ -8,6 +8,9 @@ import type { ExtractedInfo } from '@/types/js';
 import { parse as parseCss } from './cssParser';
 import { parse as parseJs } from './jsParser';
 
+type Node = DefaultTreeAdapterMap['node'];
+type Element = DefaultTreeAdapterMap['element'];
+type Text = DefaultTreeAdapterMap['textNode'];
 /**
  * Parse HTML content
  * @param {string} content HTML content
@@ -17,11 +20,8 @@ async function parse(
 	content: string,
 	options: Required<ScanOptions>,
 ): Promise<ParseResult> {
-	const dom = parseDocument(content, {
-		recognizeSelfClosing: true,
-		recognizeCDATA: true,
-		withStartIndices: true, // for location
-		withEndIndices: true, // for location
+	const dom = parseHtml(content, {
+		sourceCodeLocationInfo: true,
 	});
 
 	const resources: Resources = {
@@ -33,7 +33,7 @@ async function parse(
 	};
 
 	// The root is a Document, its children are the top-level nodes.
-	extractResources(dom as unknown as Node, resources);
+	extractResources(dom, resources);
 
 	// Parsing global variables, event listeners, and dynamic elements in inline scripts
 	const globalVariables = [];
@@ -148,27 +148,28 @@ async function parse(
  * @param {Node} node DOM node
  * @param {Resources} resources Resource object
  */
-function extractResources(node: Node, resources: Resources): void {
+function extractResources(
+	node: DefaultTreeAdapterMap['node'],
+	resources: Resources,
+): void {
 	if (!node) return;
 
-	if (node.type === 'tag') {
-		const element = node as Element & Node;
+	if ('tagName' in node && node.tagName) {
+		const element = node;
 		const location = getNodeLocation(element);
 
-		// Check if the element should be ignored
-		if (location) {
-			return;
-		}
-
-		if (element.attribs?.style) {
+		const inlineStyleAttr = element.attrs?.find(
+			(attr) => attr.name === 'style',
+		);
+		if (inlineStyleAttr) {
 			resources.inlineStyles.push({
 				element: getNodeName(element),
-				content: element.attribs.style,
+				content: inlineStyleAttr.value,
 				location: location,
 			});
 		}
 
-		if (element.name === 'style') {
+		if (element.tagName === 'style') {
 			const content = getNodeContent(element);
 			if (content) {
 				resources.styleSheets.push({
@@ -178,23 +179,27 @@ function extractResources(node: Node, resources: Resources): void {
 			}
 		}
 
+		const hrefAttr = element.attrs?.find((attr) => attr.name === 'href');
 		if (
-			element.name === 'link' &&
-			element.attribs &&
-			element.attribs.rel === 'stylesheet' &&
-			element.attribs.href
+			element.tagName === 'link' &&
+			element.attrs &&
+			element.attrs.find((attr) => attr.name === 'rel')?.value ===
+				'stylesheet' &&
+			hrefAttr
 		) {
 			resources.externalStyles.push({
-				href: element.attribs.href,
+				href: hrefAttr.value,
 				location: location,
 			});
 		}
 
-		if (element.name === 'script') {
-			if (element.attribs?.src) {
+		if (element.tagName === 'script') {
+			const srcAttr = element.attrs?.find((attr) => attr.name === 'src');
+			const typeAttr = element.attrs?.find((attr) => attr.name === 'type');
+			if (srcAttr) {
 				resources.externalScripts.push({
-					src: element.attribs.src,
-					type: element.attribs.type || 'text/javascript',
+					src: srcAttr.value,
+					type: typeAttr?.value || 'text/javascript',
 					location: location,
 				});
 			} else {
@@ -202,7 +207,7 @@ function extractResources(node: Node, resources: Resources): void {
 				if (content) {
 					resources.inlineScripts.push({
 						content,
-						type: element.attribs?.type || 'text/javascript',
+						type: typeAttr?.value || 'text/javascript',
 						location: location,
 					});
 				}
@@ -210,10 +215,10 @@ function extractResources(node: Node, resources: Resources): void {
 		}
 	}
 
-	const children = (node as Element).children || (node as Document).children;
-	if (children && children.length > 0) {
-		for (const child of children) {
-			extractResources(child as Node, resources);
+	const childNodes = 'childNodes' in node && node.childNodes;
+	if (childNodes && childNodes.length > 0) {
+		for (const child of childNodes) {
+			extractResources(child, resources);
 		}
 	}
 }
@@ -225,13 +230,13 @@ function extractResources(node: Node, resources: Resources): void {
  */
 function getNodeContent(node: Node): string {
 	const element = node as Element;
-	if (!element.children || element.children.length === 0) {
+	if (!element.childNodes || element.childNodes.length === 0) {
 		return '';
 	}
 
-	return element.children
-		.filter((child): child is Text => child.type === 'text')
-		.map((child) => child.data)
+	return element.childNodes
+		.filter((child): child is Text => child.nodeName === '#text')
+		.map((child) => child.value)
 		.join('');
 }
 
@@ -242,18 +247,20 @@ function getNodeContent(node: Node): string {
  */
 function getNodeName(node: Node): string {
 	const element = node as Element & Node;
-	if (!element || !element.name) {
+	if (!element || !element.nodeName) {
 		return 'unknown';
 	}
 
-	let name = element.name;
+	let name = element.nodeName;
 
-	if (element.attribs?.id) {
-		name += `#${element.attribs.id}`;
+	const idAttr = element.attrs?.find((attr) => attr.name === 'id');
+	if (idAttr) {
+		name += `#${idAttr.value}`;
 	}
 
-	if (element.attribs?.class) {
-		name += `.${element.attribs.class.split(' ').join('.')}`;
+	const classAttr = element.attrs?.find((attr) => attr.name === 'class');
+	if (classAttr) {
+		name += `.${classAttr.value.split(' ').join('.')}`;
 	}
 
 	return name;

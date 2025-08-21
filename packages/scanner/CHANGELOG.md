@@ -1,5 +1,11 @@
 # @module-federation/side-effect-scanner
 
+## 0.0.6
+
+### Patch Changes
+
+- fix: use parse5 to parse html
+
 ## 0.0.5
 
 ### Patch Changes

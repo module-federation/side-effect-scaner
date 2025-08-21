@@ -1,4 +1,4 @@
-import type { Document } from 'domhandler';
+import type { DefaultTreeAdapterMap } from 'parse5';
 import type { HTMLLocation } from './common';
 import type { ExtractedCssInfo } from './css';
 import type { DynamicElements, EventListener, GlobalVariable } from './js';
@@ -41,7 +41,7 @@ export interface Resources {
 }
 
 export interface ParseResult extends ExtractedCssInfo {
-	dom: Document;
+	dom: DefaultTreeAdapterMap['document'];
 	resources: Resources;
 	globalVariables: GlobalVariable[];
 	eventListeners: {
