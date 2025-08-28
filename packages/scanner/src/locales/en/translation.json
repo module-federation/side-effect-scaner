@@ -18,7 +18,7 @@
   "no_event_listener_issues": "No event listener side effect issues found.",
   "no_dynamic_element_issues": "No dynamic element side effect issues found.",
   "generated_at": "Generated at",
-  "tool_version": "Frontend Side Effect Scanner v1.0.0",
+  "tool_version": "Frontend Side Effect Scanner v{{version}}",
   "source_files": "Source Files",
   "node_modules_files": "Third-party Packages (node_modules)",
   "unknown_files": "Unknown Files",

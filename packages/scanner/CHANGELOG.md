@@ -1,5 +1,11 @@
 # @module-federation/side-effect-scanner
 
+## 0.0.7
+
+### Patch Changes
+
+- chore: add tool version in output report
+
 ## 0.0.6
 
 ### Patch Changes

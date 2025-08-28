@@ -19,7 +19,7 @@
   "no_dynamic_element_issues": "未发现动态元素副作用问题。",
   "improvement_suggestions_title": "改进建议",
   "generated_at": "生成时间",
-  "tool_version": "前端工程副作用扫描工具 v1.0.0",
+  "tool_version": "前端工程副作用扫描工具 v{{version}}",
   "source_files": "源文件",
   "node_modules_files": "第三方包 (node_modules)",
   "unknown_files": "未知文件",

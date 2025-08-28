@@ -92,7 +92,7 @@ function generateCssIssuesMarkdown(
 function generateGlobalVarIssuesMarkdown(
 	issues: Issue[] | null,
 	level = 4,
-	showSource=false
+	showSource = false,
 ): {
 	markdown: string;
 	issueTypes: Set<string>;
@@ -123,7 +123,7 @@ function generateGlobalVarIssuesMarkdown(
 				details += ` \`${issue.varName}\``;
 			}
 			markdown += `- ${pos}: ${issue.message}${details}\n`;
-			if (showSource && issue.source && issue.source !== 'unknown') {	
+			if (showSource && issue.source && issue.source !== 'unknown') {
 				markdown += `\nSource: ${issue.source}\n`;
 			}
 			if ('code' in issue && issue.code) {
@@ -511,7 +511,7 @@ export async function generateReport(
 				generateGlobalVarIssuesMarkdown(
 					fileIssues.globalVars,
 					headingLevel + 1,
-					isThirdParty
+					isThirdParty,
 				);
 			const {
 				markdown: eventListenerMarkdown,
@@ -559,7 +559,7 @@ export async function generateReport(
 	markdown += `${i18next.t('fix_refer')}\n\n`;
 
 	markdown += `\n\n---\n\n*${i18next.t('generated_at')}：${now.toLocaleString()}*
-*${i18next.t('tool_version')}*
+*${i18next.t('tool_version', { version: __VERSION__ })}*
 `;
 
 	await outputReport(markdown, options, true);

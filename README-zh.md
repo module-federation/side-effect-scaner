@@ -10,10 +10,34 @@
 npm install @module-federation/se-scan
 ```
 
-### 基本使用
+### 使用示例
+
+#### 扫描已构建的产物 （推荐）
+
+对于复杂项目，建议直接扫描构建后的产物，以获取最精准的结果
+
+```bash
+npx se-scan --dir dist
+```
+
+#### 扫描入口文件及其依赖
+
+指定入口源文件，会自动编译其依赖，并识别副作用
 
 ```bash
 npx se-scan --entry src/index.ts
+```
+
+#### 使用复杂配置
+
+```bash
+npx se-scan --entry src/index.ts --alias '{"@": "./src"}' --max-depth 5
+```
+
+#### 使用配置文件
+
+```bash
+npx se-scan --config .serc.ts
 ```
 
 ## CLI 命令详解
@@ -52,7 +76,9 @@ npx se-scan --entry src/index.ts
 
 ## 配置选项
 
-配置选项通过 `ScanOptions` 接口定义：
+你可以创建一个 `.serc.ts` 配置文件来自定义扫描选项。
+
+配置选项类型如下：
 
 ```ts
 interface ScanOptions {
@@ -88,54 +114,9 @@ interface ScanOptions {
 }
 ```
 
-## 配置文件
+## 输出产物
 
-配置文件是 `.serc.ts` 格式。
-
-### TypeScript 配置示例
-
-```ts
-import { createScanConfig } from '@module-federation/side-effect-scanner';
-
-export default createScanConfig({
-  entry: 'src/index.ts',
-  output: 'side-effect-report.md',
-  format: 'md',
-  alias: {
-    '@': './src',
-  },
-});
-```
-
-## 使用示例
-
-### 扫描入口文件及其依赖
-
-指定入口源文件，会自动编译其依赖，并识别副作用
-
-```bash
-npx se-scan --entry src/index.ts
-```
-
-### 扫描已构建的产物
-
-对于复杂项目，建议直接扫描构建后的产物
-
-```bash
-npx se-scan --dir dist
-```
-
-### 使用复杂配置
-
-```bash
-npx se-scan --entry src/index.ts --alias '{"@": "./src"}' --max-depth 5
-```
-
-### 使用配置文件
-
-```bash
-npx se-scan --config .serc.ts
-```
+扫描成功后，会生成一个 `side-effect-report.md` 文件，文件中包含了扫描结果。其格式如下：
 
 ## 高级用法
 
@@ -149,7 +130,16 @@ npx se-scan --config .serc.ts
 
 ### 自定义适配器
 
-可以通过 `adapter` 选项指定自定义适配器来处理特定构建工具的配置。适配器是一个函数，接收扫描选项和可选的适配器配置参数，返回 Rsbuild 配置对象。
+当使用 `--compile` 模式，但碰到构建报错的时候，可以通过 `adapter` 选项指定自定义适配器来处理特定构建工具的配置。适配器是一个函数，接收扫描选项和可选的适配器配置参数，返回 Rsbuild 配置对象。
+
+```ts
+import { createScanConfig } from '@module-federation/side-effect-scanner';
+
+export default createScanConfig({
+  entry: 'src/index.ts',
+  adapter: './my-adapter.js',
+});
+```
 
 #### 适配器格式
 
@@ -206,11 +196,7 @@ module.exports = function myAdapter(scanOptions, adapterOptions = {}) {
 **CLI 使用：**
 
 ```bash
-# 使用字符串格式
 npx se-scan --entry src/index.ts --adapter ./my-adapter.js
-
-# 使用数组格式传入配置
-npx se-scan --entry src/index.ts --adapter '["./my-adapter.js", {"enableSourceMap": true}]'
 ```
 
 **配置文件使用：**
@@ -219,19 +205,22 @@ npx se-scan --entry src/index.ts --adapter '["./my-adapter.js", {"enableSourceMa
 // .serc.ts
 import { createScanConfig } from '@module-federation/side-effect-scanner';
 
-export default createScanConfig({});
+export default createScanConfig({
+  entry: 'src/index.ts',
+  adapter: './my-adapter.js',
+});
 ```
 
 #### 内置适配器
 
 项目提供了以下内置适配器：
 
-- `@side-effect/edenx-adapter` - 适用于 EdenX 项目（版本大于 1.63.0）
+- `@module-federation/side-effect-modernjs-adapter` - 适用于 Modern.js 项目（版本大于 2.63.0）
 
 使用示例：
 
 ```bash
-npx se-scan --entry src/index.ts --adapter node_modules/@side-effect/edenx-adapter/dist/cjs/index.js
+npx se-scan --entry src/index.ts --adapter <require.resolve('@module-federation/side-effect-modernjs-adapter')>
 ```
 
 ### 忽略特定代码段
@@ -250,6 +239,9 @@ import { createScanConfig } from '@module-federation/side-effect-scanner';
 
 export default createScanConfig({
   ignore: [
+    '**/@modern-js/runtime/**', // 忽略 @modern-js/runtime 依赖
+    '**/react*/**', // 忽略所有 react 开头的依赖
+    '**/lib-router*.js', // 忽略所有 lib-router 开头的 JS 文件
     'src/utils/vendor/**', // 忽略整个目录
     'src/test/**/*.test.js', // 忽略所有测试文件
     'src/legacy/old-code.js', // 忽略特定文件
@@ -283,125 +275,66 @@ export default createScanConfig({
 });
 ```
 
-#### 使用示例
-
-##### 示例 1：忽略第三方库
-
-```typescript
-// .serc.ts
-import { createScanConfig } from '@module-federation/side-effect-scanner';
-
-export default createScanConfig({
-  entry: 'src/index.js',
-  ignore: ['node_modules/**', 'src/vendor/**', '**/*.min.js'],
-});
-```
-
-##### 示例 2：忽略测试文件和特定行
-
-```typescript
-// .serc.ts
-import { createScanConfig } from '@module-federation/side-effect-scanner';
-
-export default createScanConfig({
-  entry: 'src/index.js',
-  ignore: [
-    '**/*.test.js',
-    '**/*.spec.ts',
-    {
-      file: 'src/utils/debug.js',
-      lines: [42, 43, 44], // 忽略调试代码
-    },
-  ],
-});
-```
-
-##### 示例 3：混合使用
-
-```typescript
-// .serc.ts
-import { createScanConfig } from '@module-federation/side-effect-scanner';
-
-export default createScanConfig({
-  entry: 'src/index.js',
-  ignore: [
-    'dist/**',
-    'build/**',
-    'src/legacy/**',
-    {
-      file: 'src/components/App.js',
-      lines: [100, 101, 102], // 忽略特定的初始化代码
-    },
-    {
-      pattern: 'src/styles/*.css',
-      lines: [1], // 忽略CSS文件的版权注释
-    },
-  ],
-});
-```
-
-#### 注意事项
-
-1. **路径匹配**：路径可以是相对路径或绝对路径，支持 glob 模式（\* 和 \*\*）
-2. **行号索引**：行号从 1 开始计数
-3. **优先级**：配置中的规则按顺序匹配，第一个匹配的规则生效
-4. **与魔法注释共存**：忽略配置可以与魔法注释一起使用，魔法注释优先级更高
-
-#### 调试技巧
-
-要验证忽略配置是否正确生效，可以使用以下命令：
-
-```bash
-# 运行扫描并查看详细输出
-npx se-scan --config .serc.ts --verbose
-
-# 检查特定文件是否被忽略
-npx se-scan --config .serc.ts --check-ignore src/path/to/file.js
-```
-
-#### 配置验证
-
-确保你的配置文件格式正确：
-
-```typescript
-// 正确的配置格式
-import { createScanConfig } from '@module-federation/side-effect-scanner';
-
-export default createScanConfig({
-  entry: 'src/index.js',
-  ignore: [
-    'string/path.js', // ✅ 正确：字符串
-    {
-      // ✅ 正确：对象
-      file: 'path.js',
-      lines: [1, 2, 3],
-    },
-    {
-      // ✅ 正确：使用pattern
-      pattern: '**/*.test.js',
-      lines: [10, 20],
-    },
-  ],
-});
-```
-
 ### 路径别名
 
-使用 `alias` 选项配置路径别名，确保正确解析模块依赖。
+当对源码文件扫描时，可以设置 `alias` 选项配置路径别名，确保正确解析模块依赖。
 
 ### 扫描深度控制
 
 使用 `maxDepth` 选项控制依赖解析的最大深度，避免过深的依赖解析影响性能。
 
-## 输出格式
+```markdown
+# 📊 前端工程副作用扫描报告
 
-### Markdown (默认)
+## 📋 报告概览
 
-生成 Markdown 格式的报告文件。
+| 类型         | details            |
+| ------------ | ------------------ |
+| **扫描入口** | `dist`             |
+| **文件数量** | 9 文件数量         |
+| **扫描时间** | 2025/8/26 11:04:39 |
 
-### Console
+## 📈 问题统计
 
-直接在控制台输出扫描结果。
+| 类型                 | 数量  | 状态 |
+| -------------------- | ----- | ---- |
+| **CSS副作用**        | 7 7   | ❌   |
+| **全局变量副作用**   | 10 10 | ❌   |
+| **事件监听器副作用** | 2 2   | ⚠️   |
+| **动态元素副作用**   | 0 0   | ✅   |
+| **总计**             | 19 19 | ❌   |
+
+---
+
+## 📝 源文件 (3)
+
+### src/routes/index.css (3)
+
+#### 🎨 CSS副作用 (3)
+
+## ❓ 未知文件 (3)
+
+### dist/static/js/lib-router.5404ac00.js (1)
+
+#### 🌍 全局变量副作用 (1)
+
+## 📦 第三方包 (node_modules) (4)
+
+### modernjs-test
+
+- 🟡 全局变量声明 (1)
+
+[View Details](./node_modules/.se/modernjs-test.md)
+
+## 💡 如何修复
+
+参考文档：https://lf3-static.bytednsdoc.com/obj/eden-cn/shloeh7nuhonuhog/FIX-GUIDE-zh.md
+
+---
+
+_生成时间：2025/8/26 11:04:39_
+_前端工程副作用扫描工具 v0.0.7_
+```
 
 ## 常见问题
 

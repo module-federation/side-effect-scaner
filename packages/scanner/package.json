@@ -1,6 +1,6 @@
 {
   "name": "@module-federation/side-effect-scanner",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "./dist/cjs/index.js",
   "publishConfig": {
     "access": "public"
@@ -48,5 +48,8 @@
     "@types/css-tree": "^2.3.10",
     "@types/node": "^16.18.74",
     "typescript": "5.8.3"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }
