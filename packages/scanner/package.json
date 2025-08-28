@@ -1,6 +1,6 @@
 {
   "name": "@module-federation/side-effect-scanner",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "main": "./dist/cjs/index.js",
   "publishConfig": {
     "access": "public"

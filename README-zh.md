@@ -7,7 +7,7 @@
 ### 安装
 
 ```bash
-npm install @module-federation/se-scan
+npm install @module-federation/side-effect-scanner
 ```
 
 ### 使用示例
@@ -333,7 +333,7 @@ export default createScanConfig({
 ---
 
 _生成时间：2025/8/26 11:04:39_
-_前端工程副作用扫描工具 v0.0.7_
+_前端工程副作用扫描工具 v0.0.8_
 ```
 
 ## 常见问题

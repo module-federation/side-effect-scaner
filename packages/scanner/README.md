@@ -5,7 +5,7 @@
 ### Installation
 
 ```bash
-npm install @module-federation/se-scan
+npm install @module-federation/side-effect-scanner
 ```
 
 ### Usage Examples

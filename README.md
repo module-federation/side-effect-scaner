@@ -11,7 +11,7 @@ We provide a CLI tool to help detect side effects including CSS, global variable
 ### Installation
 
 ```bash
-npm install @module-federation/se-scan
+npm install @module-federation/side-effect-scanner
 ```
 
 ### Usage Examples
@@ -337,7 +337,7 @@ Reference documentation: https://lf3-static.bytednsdoc.com/obj/eden-cn/shloeh7nu
 ---
 
 _Generated at: 2025/8/26 11:04:39_
-_Frontend Project Side Effect Scan Tool v0.0.7_
+_Frontend Project Side Effect Scan Tool v0.0.8_
 ```
 
 ## Common Issues
