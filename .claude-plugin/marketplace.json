@@ -1,6 +1,7 @@
 {
   "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "version": "1.0.0",
+  "name": "side-effect-analyzer-plugins",
   "owner": {
     "name": "2heal1",
     "email": "hanric.zhang@gmail.com"
