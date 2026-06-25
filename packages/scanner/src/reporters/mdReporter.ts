@@ -33,6 +33,66 @@ const sourceGroupHeadings: Record<SourceGroup, string> = {
 	unknown: `## ❓ ${i18next.t('unknown_files')}`,
 };
 
+function readPackageNameFromParts(
+	parts: string[],
+	startIndex: number,
+): string | null {
+	const name = parts[startIndex];
+	if (!name) {
+		return null;
+	}
+	if (name.startsWith('@')) {
+		const scopedName = parts[startIndex + 1];
+		return scopedName ? `${name}/${scopedName}` : null;
+	}
+	return name;
+}
+
+function getPackageNameFromPnpmFolder(folder: string): string | null {
+	const packagePart = folder.split('_')[0];
+	const versionStart = packagePart.lastIndexOf('@');
+	if (versionStart <= 0) {
+		return null;
+	}
+	return packagePart.slice(0, versionStart).replace('+', '/');
+}
+
+function getThirdPartyPackageName(filepath: string): string | null {
+	const normalizedPath = filepath.replace(/^webpack:\/\/[^/]+\//, '');
+	const parts = normalizedPath.split(/[\\/]+/);
+
+	for (let i = 0; i < parts.length; i++) {
+		if (parts[i] !== 'node_modules') {
+			continue;
+		}
+
+		if (parts[i + 1] === '.pnpm') {
+			for (let j = i + 2; j < parts.length; j++) {
+				if (parts[j] === 'node_modules') {
+					return readPackageNameFromParts(parts, j + 1);
+				}
+			}
+			return parts[i + 2] ? getPackageNameFromPnpmFolder(parts[i + 2]) : null;
+		}
+
+		return readPackageNameFromParts(parts, i + 1);
+	}
+
+	return null;
+}
+
+function getReportSafePackageName(packageName: string): string {
+	return packageName.replace(/^@/, '').replace(/\//g, '.');
+}
+
+function getThirdPartyReportFileName(
+	packageName: string,
+	filepath: string,
+): string {
+	const hash = createHash('md5').update(filepath).digest('hex').slice(0, 8);
+	return `${packageName}-${hash}.md`;
+}
+
 /**
  * Generate Markdown content for CSS issues
  * @param {Array<Object>} issues CSS issues list
@@ -472,29 +532,39 @@ export async function generateReport(
 `;
 
 	const thirdPartyMarkdownDir = path.join(process.cwd(), 'node_modules/.se');
+	try {
+		fs.rmSync(thirdPartyMarkdownDir, { recursive: true, force: true });
+	} catch (_e) {
+		// noop
+	}
 
 	for (const group in reportMap) {
 		markdown += `${sourceGroupHeadings[group as SourceGroup]} (${Object.keys(reportMap[group as keyof ReportMap]).length})\n\n`;
 		let id = 0;
 		for (const filepath in reportMap[group as keyof ReportMap]) {
 			let pkgOrFilePath = filepath;
+			let thirdPartyReportFileName = '';
 			const isThirdParty = group === 'node_modules';
 			if (isThirdParty) {
 				try {
 					fs.mkdirSync(thirdPartyMarkdownDir, {
 						recursive: true,
 					});
-				} catch (e) {
+				} catch (_e) {
 					//noop
 				}
 				try {
-					const pkgPath = finder.sync(filepath);
-					pkgOrFilePath = JSON.parse(fs.readFileSync(pkgPath, 'utf8'))
-						.name.replace(/@/g, '')
-						.replace(/\//g, '.');
-				} catch (e) {
+					const packageName =
+						getThirdPartyPackageName(filepath) ||
+						JSON.parse(fs.readFileSync(finder.sync(filepath), 'utf8')).name;
+					pkgOrFilePath = getReportSafePackageName(packageName);
+				} catch (_e) {
 					pkgOrFilePath = `unknown-pkg-${id}`;
 				}
+				thirdPartyReportFileName = getThirdPartyReportFileName(
+					pkgOrFilePath,
+					filepath,
+				);
 			}
 			let blockMarkDown = '';
 			const headingLevel = 3 - (isThirdParty ? 2 : 0);
@@ -543,11 +613,11 @@ export async function generateReport(
 			if (isThirdParty) {
 				await outputReport(blockMarkDown, {
 					...options,
-					output: path.join(thirdPartyMarkdownDir, `${pkgOrFilePath}.md`),
+					output: path.join(thirdPartyMarkdownDir, thirdPartyReportFileName),
 				});
 				markdown += `### ${pkgOrFilePath}\n\n`;
 				markdown += `${[...issueTypes].map((issueType) => `* ${issueType}\n`).join(' ')}`;
-				markdown += `[View Details](./node_modules/.se/${pkgOrFilePath}.md)\n\n`;
+				markdown += `[View Details](./node_modules/.se/${thirdPartyReportFileName})\n\n`;
 			} else {
 				markdown += blockMarkDown;
 			}

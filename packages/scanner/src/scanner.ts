@@ -10,6 +10,23 @@ import type { AssetMap } from './rsbuild-plugins/shake-plugin';
 import type { ScanOptions } from './types/config';
 import * as dependencyResolver from './utils/dependencyResolver';
 
+async function withVerboseTiming<T>(
+	label: string,
+	verbose: boolean,
+	task: () => Promise<T>,
+): Promise<T> {
+	if (!verbose) {
+		return task();
+	}
+
+	console.time(label);
+	try {
+		return await task();
+	} finally {
+		console.timeEnd(label);
+	}
+}
+
 /**
  * @param {ScanOptions} options - Scan options
  * @returns {Promise<Object>} Scan results
@@ -26,12 +43,14 @@ export async function scan(
 
 	const finalAssetMap =
 		assetMap ||
-		(await dependencyResolver.resolveAssetMap(options.dir || options.entry, {
-			maxDepth: options.maxDepth,
-			aliases: options.alias,
-		}));
+		(await withVerboseTiming('resolve assets', options.verbose, () =>
+			dependencyResolver.resolveAssetMap(options.dir || options.entry, {
+				maxDepth: options.maxDepth,
+				aliases: options.alias,
+			}),
+		));
 
-	if (!finalAssetMap['js']) {
+	if (!finalAssetMap.js) {
 		console.log(
 			chalk.red(
 				`无法从入口文件 "${options.entry}" 解析到任何文件。请检查入口文件路径是否正确，以及文件是否真实存在。`,
@@ -41,7 +60,11 @@ export async function scan(
 	}
 
 	// 解析文件
-	const parsedFiles = await fileParser.parse(finalAssetMap, options);
+	const parsedFiles = await withVerboseTiming(
+		'parse files',
+		options.verbose,
+		() => fileParser.parse(finalAssetMap, options),
+	);
 
 	if (!parsedFiles.length) {
 		console.log(
@@ -60,21 +83,31 @@ export async function scan(
 		eventListenerResults,
 		dynamicElementResults,
 	] = await Promise.all([
-		cssAnalyzer.analyze(parsedFiles, ignoreFilter, options),
-		globalVarAnalyzer.analyze(parsedFiles, ignoreFilter, options),
-		eventListenerAnalyzer.analyze(parsedFiles, ignoreFilter, options),
-		dynamicElementAnalyzer.analyze(parsedFiles, ignoreFilter, options),
+		withVerboseTiming('analyze css', options.verbose, () =>
+			cssAnalyzer.analyze(parsedFiles, ignoreFilter, options),
+		),
+		withVerboseTiming('analyze global vars', options.verbose, () =>
+			globalVarAnalyzer.analyze(parsedFiles, ignoreFilter, options),
+		),
+		withVerboseTiming('analyze event listeners', options.verbose, () =>
+			eventListenerAnalyzer.analyze(parsedFiles, ignoreFilter, options),
+		),
+		withVerboseTiming('analyze dynamic elements', options.verbose, () =>
+			dynamicElementAnalyzer.analyze(parsedFiles, ignoreFilter, options),
+		),
 	]);
 
-	await generateMarkdownReport(
-		options,
-		{
-			css: cssResults,
-			globalVars: globalVarResults,
-			eventListeners: eventListenerResults,
-			dynamicElements: dynamicElementResults,
-		},
-		parsedFiles.length,
-		scannedAt,
+	await withVerboseTiming('generate report', options.verbose, () =>
+		generateMarkdownReport(
+			options,
+			{
+				css: cssResults,
+				globalVars: globalVarResults,
+				eventListeners: eventListenerResults,
+				dynamicElements: dynamicElementResults,
+			},
+			parsedFiles.length,
+			scannedAt,
+		),
 	);
 }

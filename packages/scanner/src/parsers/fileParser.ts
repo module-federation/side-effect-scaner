@@ -8,6 +8,27 @@ import { parse as cssParse } from './cssParser';
 import { parse as htmlParse } from './htmlParser';
 import { parse as jsParse } from './jsParser';
 
+const SOURCE_MAP_PARSE_SIZE_LIMIT = 5 * 1024 * 1024;
+
+function getSourcemapSources(
+	asset: Asset,
+	options: Required<ScanOptions>,
+): string[] {
+	if (
+		options.ignore.length === 0 ||
+		!asset.map ||
+		asset.map.length > SOURCE_MAP_PARSE_SIZE_LIMIT
+	) {
+		return [];
+	}
+
+	try {
+		return [...JSON.parse(asset.map).sources];
+	} catch {
+		return [];
+	}
+}
+
 /**
  * Dynamically parses file content based on its extension.
  * @returns A promise that resolves to a ParsedFile object.
@@ -17,6 +38,10 @@ async function parseItem(
 	asset: Asset,
 	options: Required<ScanOptions>,
 ): Promise<ParsedFile> {
+	const label = `parse ${path.relative(process.cwd(), asset.name)}`;
+	if (options.verbose) {
+		console.time(label);
+	}
 	const content = asset.content;
 	const fileExt = path.extname(asset.name);
 	const baseResult: BaseParsedFile = {
@@ -29,8 +54,16 @@ async function parseItem(
 
 	// Check if entire file should be ignored
 	const ignoreFilter = new IgnoreFilter(options.ignore || []);
-	const sources = [...JSON.parse(asset.map || `{"sources":[]}`).sources];
-	if (sources.some((source) => ignoreFilter.shouldIgnoreFile(source))) {
+	const sources = getSourcemapSources(asset, options);
+	const relativeAssetName = path.relative(
+		process.cwd(),
+		path.resolve(asset.name),
+	);
+	if (
+		ignoreFilter.shouldIgnoreFile(asset.name) ||
+		ignoreFilter.shouldIgnoreFile(relativeAssetName) ||
+		sources.some((source) => ignoreFilter.shouldIgnoreFile(source))
+	) {
 		return {
 			...baseResult,
 			type: getFileTypeFromExt(fileExt),
@@ -86,6 +119,10 @@ async function parseItem(
 			type: 'error',
 			error: error.message,
 		};
+	} finally {
+		if (options.verbose) {
+			console.timeEnd(label);
+		}
 	}
 }
 

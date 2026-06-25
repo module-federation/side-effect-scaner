@@ -117,11 +117,17 @@ async function findListenerDefinition(
 	const parsedFile = parsedFileMap.get(sourceFile);
 
 	// 1. First try to find definition in current file's AST
-	if (parsedFile && parsedFile.eventListeners) {
+	if (parsedFile?.eventListeners) {
 		const res = findListenerInParsedFile(parsedFile);
 		if (res?.found) {
 			return res;
 		}
+	}
+
+	if (options.dir) {
+		return {
+			found: false,
+		};
 	}
 
 	// 2. If not found in current file, perform dependency analysis
@@ -157,7 +163,7 @@ async function findListenerDefinition(
 						options,
 					);
 					parsedFileMap.set(depPath, parsed);
-				} catch (error) {}
+				} catch (_error) {}
 			}
 
 			if (!parsed) {

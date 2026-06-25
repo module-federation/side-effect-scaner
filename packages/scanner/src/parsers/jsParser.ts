@@ -28,10 +28,7 @@ import type {
 } from '@/types/js';
 
 function correctPosition(ast: Module, position: number) {
-	if (ast.span.start !== 1) {
-		return position - ast.span.start + 1;
-	}
-	return position;
+	return Math.max(0, position - ast.span.start);
 }
 
 /**
@@ -81,12 +78,40 @@ const isAssignmentExpression = (node: Node): node is AssignmentExpression =>
 const isCallExpression = (node: Node): node is CallExpression =>
 	isNodeOfType(node, 'CallExpression');
 
+const FAST_SCAN_SIZE_THRESHOLD = 2 * 1024 * 1024;
+const MAX_CODE_SNIPPET_LENGTH = 500;
+
+type Quote = '"' | "'" | '`';
+
+function isBundlerRuntimeGlobalVar(name: string): boolean {
+	return name === '__RB_ASYNC_CHUNKS__' || /^@[^:]+:[^:]+$/.test(name);
+}
+
+function shouldIgnoreGlobalVarName(
+	name: string,
+	options: Required<ScanOptions>,
+): boolean {
+	return (
+		isBundlerRuntimeGlobalVar(name) ||
+		options.ignoredGlobalVars.some((ignoredGlobalVar) =>
+			matchPattern(ignoredGlobalVar, name),
+		)
+	);
+}
+
 async function parse(
 	content: string,
 	isTypeScript = false,
 	options: Required<ScanOptions>,
 ): Promise<ParseResult> {
 	try {
+		if (!isTypeScript && shouldUseFastScan(content)) {
+			return {
+				ast: null as unknown as Module,
+				...extractJsInfoFast(content, options),
+			};
+		}
+
 		const parserOptions: ParseOptions = {
 			syntax: isTypeScript ? 'typescript' : 'ecmascript',
 			tsx: isTypeScript,
@@ -105,6 +130,403 @@ async function parse(
 	} catch (error: any) {
 		throw new Error(`JavaScript parsing error: ${error.message}`);
 	}
+}
+
+function shouldUseFastScan(content: string): boolean {
+	return (
+		content.length > FAST_SCAN_SIZE_THRESHOLD &&
+		(content.includes('addEventListener') ||
+			content.includes('removeEventListener') ||
+			content.includes('createElement') ||
+			content.includes('appendChild') ||
+			content.includes('insertBefore') ||
+			content.includes('removeChild') ||
+			content.includes('insertAdjacentHTML') ||
+			content.includes('window.') ||
+			content.includes('globalThis.') ||
+			content.includes('global.'))
+	);
+}
+
+function createLineLocator(source: string) {
+	if (!source.includes('\n')) {
+		return (offset: number) => {
+			if (offset < 0 || offset > source.length) {
+				return null;
+			}
+			return { line: 1, column: offset + 1 };
+		};
+	}
+
+	const lineStarts = [0];
+	for (let i = 0; i < source.length; i++) {
+		if (source.charCodeAt(i) === 10) {
+			lineStarts.push(i + 1);
+		}
+	}
+
+	return (offset: number): { line: number; column: number } | null => {
+		if (offset < 0 || offset > source.length) {
+			return null;
+		}
+
+		let low = 0;
+		let high = lineStarts.length - 1;
+		while (low <= high) {
+			const mid = Math.floor((low + high) / 2);
+			if (lineStarts[mid] <= offset) {
+				low = mid + 1;
+			} else {
+				high = mid - 1;
+			}
+		}
+
+		const lineIndex = Math.max(0, high);
+		return {
+			line: lineIndex + 1,
+			column: offset - lineStarts[lineIndex] + 1,
+		};
+	};
+}
+
+function isIdentifierStart(char: string): boolean {
+	return /[A-Za-z_$]/.test(char);
+}
+
+function isIdentifierPart(char: string): boolean {
+	return /[\w$]/.test(char);
+}
+
+function readIdentifier(source: string, start: number): string {
+	let end = start;
+	while (end < source.length && isIdentifierPart(source[end])) {
+		end++;
+	}
+	return source.slice(start, end);
+}
+
+function skipWhitespace(source: string, index: number): number {
+	let i = index;
+	while (i < source.length && /\s/.test(source[i])) {
+		i++;
+	}
+	return i;
+}
+
+function isEscaped(source: string, index: number): boolean {
+	let slashCount = 0;
+	for (let i = index - 1; i >= 0 && source[i] === '\\'; i--) {
+		slashCount++;
+	}
+	return slashCount % 2 === 1;
+}
+
+function skipString(source: string, start: number, quote: Quote): number {
+	let i = start + 1;
+	while (i < source.length) {
+		if (source[i] === quote && !isEscaped(source, i)) {
+			return i + 1;
+		}
+		i++;
+	}
+	return source.length;
+}
+
+function skipLineComment(source: string, start: number): number {
+	const end = source.indexOf('\n', start + 2);
+	return end === -1 ? source.length : end + 1;
+}
+
+function skipBlockComment(source: string, start: number): number {
+	const end = source.indexOf('*/', start + 2);
+	return end === -1 ? source.length : end + 2;
+}
+
+function findMatchingParen(source: string, openIndex: number): number {
+	let depth = 0;
+	let i = openIndex;
+	while (i < source.length) {
+		const char = source[i];
+		const next = source[i + 1];
+
+		if (char === '"' || char === "'" || char === '`') {
+			i = skipString(source, i, char);
+			continue;
+		}
+		if (char === '/' && next === '/') {
+			i = skipLineComment(source, i);
+			continue;
+		}
+		if (char === '/' && next === '*') {
+			i = skipBlockComment(source, i);
+			continue;
+		}
+
+		if (char === '(') {
+			depth++;
+		} else if (char === ')') {
+			depth--;
+			if (depth === 0) {
+				return i;
+			}
+		}
+		i++;
+	}
+	return -1;
+}
+
+function splitTopLevelArgs(argsSource: string): string[] {
+	const args: string[] = [];
+	let start = 0;
+	let depth = 0;
+	let i = 0;
+
+	while (i < argsSource.length) {
+		const char = argsSource[i];
+		const next = argsSource[i + 1];
+
+		if (char === '"' || char === "'" || char === '`') {
+			i = skipString(argsSource, i, char);
+			continue;
+		}
+		if (char === '/' && next === '/') {
+			i = skipLineComment(argsSource, i);
+			continue;
+		}
+		if (char === '/' && next === '*') {
+			i = skipBlockComment(argsSource, i);
+			continue;
+		}
+
+		if (char === '(' || char === '[' || char === '{') {
+			depth++;
+		} else if (char === ')' || char === ']' || char === '}') {
+			depth--;
+		} else if (char === ',' && depth === 0) {
+			args.push(argsSource.slice(start, i).trim());
+			start = i + 1;
+		}
+		i++;
+	}
+
+	args.push(argsSource.slice(start).trim());
+	return args;
+}
+
+function readStringLiteral(value: string): string | null {
+	const trimmed = value.trim();
+	const quote = trimmed[0];
+	if (
+		(quote !== '"' && quote !== "'") ||
+		trimmed.length < 2 ||
+		trimmed[trimmed.length - 1] !== quote
+	) {
+		return null;
+	}
+	return trimmed.slice(1, -1);
+}
+
+function getFastListenerDefinition(value: string): string {
+	const trimmed = value.trim();
+	if (!trimmed) {
+		return 'unknown';
+	}
+	if (
+		trimmed.startsWith('function') ||
+		trimmed.startsWith('(') ||
+		trimmed.includes('=>')
+	) {
+		return 'anonymous';
+	}
+	const match = trimmed.match(/^[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)?/);
+	return match?.[0] || 'unknown';
+}
+
+function getBoundedSnippet(source: string, start: number, end: number): string {
+	const snippet = source.slice(start, end);
+	if (snippet.length <= MAX_CODE_SNIPPET_LENGTH) {
+		return snippet;
+	}
+	return `${snippet.slice(0, MAX_CODE_SNIPPET_LENGTH)}...`;
+}
+
+function readMemberObject(source: string, dotIndex: number): string {
+	const end = dotIndex;
+	let start = end - 1;
+	while (start >= 0 && isIdentifierPart(source[start])) {
+		start--;
+	}
+	const identifier = source.slice(start + 1, end);
+	return identifier || 'complex_element';
+}
+
+function extractJsInfoFast(
+	source: string,
+	options: Required<ScanOptions>,
+): ExtractedInfo {
+	const locate = createLineLocator(source);
+	const globalVariables: GlobalVariable[] = [];
+	const eventListeners: ExtractedInfo['eventListeners'] = {
+		add: [],
+		remove: [],
+	};
+	const dynamicElements: DynamicElements = {
+		create: [],
+		append: [],
+		insert: [],
+		remove: [],
+		innerHTML: [],
+	};
+	const imports: Import[] = [];
+	const exports: Export[] = [];
+	const functions: Func[] = [];
+	const eventMethods = new Set([
+		'addEventListener',
+		'removeEventListener',
+		'on',
+		'off',
+	]);
+	const dynamicMethods = new Set([
+		'createElement',
+		'createTextNode',
+		'appendChild',
+		'insertBefore',
+		'removeChild',
+		'insertAdjacentHTML',
+	]);
+
+	let i = 0;
+	while (i < source.length) {
+		const char = source[i];
+		const next = source[i + 1];
+
+		if (char === '"' || char === "'" || char === '`') {
+			i = skipString(source, i, char);
+			continue;
+		}
+		if (char === '/' && next === '/') {
+			i = skipLineComment(source, i);
+			continue;
+		}
+		if (char === '/' && next === '*') {
+			i = skipBlockComment(source, i);
+			continue;
+		}
+
+		if (isIdentifierStart(char)) {
+			const objectName = readIdentifier(source, i);
+			const afterObject = skipWhitespace(source, i + objectName.length);
+			if (
+				(objectName === 'window' ||
+					objectName === 'globalThis' ||
+					objectName === 'global') &&
+				source[afterObject] === '.'
+			) {
+				const propStart = skipWhitespace(source, afterObject + 1);
+				const propName = readIdentifier(source, propStart);
+				const afterProp = skipWhitespace(source, propStart + propName.length);
+				if (propName && source[afterProp] === '=') {
+					const startLocation = locate(i);
+					if (startLocation && !shouldIgnoreGlobalVarName(propName, options)) {
+						globalVariables.push({
+							name: propName,
+							type: 'assignment',
+							code: getBoundedSnippet(source, i, afterProp + 1),
+							location: {
+								start: startLocation,
+								end: locate(afterProp + 1),
+							},
+						});
+					}
+				}
+			}
+			i += objectName.length;
+			continue;
+		}
+
+		if (char === '.') {
+			const methodStart = i + 1;
+			if (!isIdentifierStart(source[methodStart])) {
+				i++;
+				continue;
+			}
+			const methodName = readIdentifier(source, methodStart);
+			const openParen = skipWhitespace(source, methodStart + methodName.length);
+
+			if (
+				source[openParen] === '(' &&
+				(eventMethods.has(methodName) || dynamicMethods.has(methodName))
+			) {
+				const closeParen = findMatchingParen(source, openParen);
+				if (closeParen === -1) {
+					i = openParen + 1;
+					continue;
+				}
+				const callStart = Math.max(0, i - readMemberObject(source, i).length);
+				const startLocation = locate(callStart);
+				const endLocation = locate(closeParen + 1);
+				const args = splitTopLevelArgs(source.slice(openParen + 1, closeParen));
+				const code = getBoundedSnippet(source, callStart, closeParen + 1);
+
+				if (startLocation) {
+					if (eventMethods.has(methodName)) {
+						const isRemove =
+							methodName === 'removeEventListener' || methodName === 'off';
+						eventListeners[isRemove ? 'remove' : 'add'].push({
+							type: methodName,
+							event: readStringLiteral(args[0] || '') || 'unknown',
+							element: readMemberObject(source, i),
+							hasRemoveListener: isRemove,
+							definition: getFastListenerDefinition(args[1] || ''),
+							code,
+							location: {
+								start: startLocation,
+								end: endLocation,
+							},
+						});
+					} else {
+						const operation: DynamicElementOperation = {
+							element: readMemberObject(source, i),
+							method: methodName,
+							code,
+							location: {
+								start: startLocation,
+								end: endLocation,
+							},
+						};
+						if (methodName === 'appendChild') {
+							operation.parent = operation.element;
+							dynamicElements.append.push(operation);
+						} else if (methodName === 'insertBefore') {
+							operation.parent = operation.element;
+							dynamicElements.insert.push(operation);
+						} else if (methodName === 'removeChild') {
+							operation.parent = operation.element;
+							dynamicElements.remove.push(operation);
+						} else if (methodName === 'insertAdjacentHTML') {
+							dynamicElements.innerHTML.push(operation);
+						} else {
+							dynamicElements.create.push(operation);
+						}
+					}
+				}
+
+				i = closeParen + 1;
+				continue;
+			}
+		}
+
+		i++;
+	}
+
+	return {
+		globalVariables,
+		eventListeners,
+		dynamicElements,
+		imports,
+		exports,
+		functions,
+	};
 }
 
 function extractJsInfo(
@@ -138,10 +560,7 @@ function extractJsInfo(
 				const globalVarName = getGlobalVarName(node);
 				if (
 					startLocation &&
-					options.ignoredGlobalVars.every(
-						(ignoredGlobalVar) =>
-							!matchPattern(ignoredGlobalVar, globalVarName),
-					)
+					!shouldIgnoreGlobalVarName(globalVarName, options)
 				) {
 					globalVariables.push({
 						name: getGlobalVarName(node),
@@ -392,7 +811,7 @@ function getListenerName(node: CallExpression): string {
 			result += arg.object.value;
 		}
 		if (arg.property?.type === 'Identifier' && arg.property.value) {
-			result += '.' + arg.property.value;
+			result += `.${arg.property.value}`;
 		}
 		return result || 'unknown';
 	}
@@ -419,7 +838,7 @@ function getListenerName(node: CallExpression): string {
 					bindTarget.property?.type === 'Identifier' &&
 					bindTarget.property.value
 				) {
-					result += '.' + bindTarget.property.value;
+					result += `.${bindTarget.property.value}`;
 				}
 				return result || 'unknown';
 			} else if (bindTarget.type === 'Identifier' && bindTarget.value) {
@@ -440,10 +859,22 @@ function isGlobalAssignment(node: AssignmentExpression): boolean {
 }
 
 function getGlobalVarName(node: AssignmentExpression): string {
-	return node.left.type === 'MemberExpression' &&
-		node.left.property.type === 'Identifier'
-		? node.left.property.value
-		: 'unknown';
+	if (node.left.type !== 'MemberExpression') {
+		return 'unknown';
+	}
+
+	if (node.left.property.type === 'Identifier') {
+		return node.left.property.value;
+	}
+
+	if (
+		node.left.property.type === 'Computed' &&
+		node.left.property.expression.type === 'StringLiteral'
+	) {
+		return node.left.property.expression.value;
+	}
+
+	return 'unknown';
 }
 
 function isAddEventListener(node: CallExpression): boolean {
@@ -812,7 +1243,7 @@ function findTargetListenerDefinition(
 	const imports = findImportsForListener(ast);
 	for (const imp of imports) {
 		// Check if the imported module may contain listener definitions
-		if (imp.source && imp.source.includes('event')) {
+		if (imp.source?.includes('event')) {
 			return {
 				found: false,
 				fromPath: imp.source,
@@ -824,7 +1255,7 @@ function findTargetListenerDefinition(
 	const exports = findExportsForListener(ast);
 	for (const exp of exports) {
 		// 检查导出的模块是否可能包含监听器定义
-		if (exp.source && exp.source.includes('event')) {
+		if (exp.source?.includes('event')) {
 			return {
 				found: false,
 				fromPath: exp.source,

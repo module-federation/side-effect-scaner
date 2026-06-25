@@ -29,31 +29,84 @@ interface PendingFile {
 	depth: number;
 }
 
-//  clean license comment
+function isEscaped(content: string, index: number): boolean {
+	let slashCount = 0;
+	for (let i = index - 1; i >= 0 && content[i] === '\\'; i--) {
+		slashCount++;
+	}
+	return slashCount % 2 === 1;
+}
+
+function isLicenseBlockComment(comment: string): boolean {
+	return (
+		comment.startsWith('/*!') ||
+		/^\/\*\*?\s*@license\b/i.test(comment) ||
+		/For license information/i.test(comment)
+	);
+}
+
+function isLicenseLineComment(comment: string): boolean {
+	return /^\/\/\s*@license\b/i.test(comment);
+}
+
+function blankComment(comment: string): string {
+	return comment.replace(/[^\r\n]/g, ' ');
+}
+
+// Clean license comments without treating comment-like text inside strings as comments.
 function cleanLicenseComment(content: string): string {
-	// Match and remove common license comment formats
-	const licensePatterns = [
-		// /*! ... */ format
-		/\/\*![\s\S]*?\*\//g,
-		// /** @license ... */ format
-		/\/\*\*?\s*@license[\s\S]*?\*\//g,
-		// /* For license information ... */ format
-		/\/\*[\s\S]*?For license information[\s\S]*?\*\//g,
-		// // @license ... format
-		/\/\/\s*@license.*$/gm,
-		// License information in multi-line comments
-		/\/\*[\s\S]*?license[\s\S]*?\*\//gi,
-	];
+	let cleanedContent = '';
+	let i = 0;
+	let stringQuote: "'" | '"' | '`' | null = null;
 
-	let cleanedContent = content;
+	while (i < content.length) {
+		const char = content[i];
+		const next = content[i + 1];
 
-	// Apply all cleaning modes
-	licensePatterns.forEach((pattern) => {
-		cleanedContent = cleanedContent.replace(pattern, '');
-	});
+		if (stringQuote) {
+			cleanedContent += char;
+			if (char === stringQuote && !isEscaped(content, i)) {
+				stringQuote = null;
+			}
+			i++;
+			continue;
+		}
 
-	// Clean up extra blank lines
-	cleanedContent = cleanedContent.replace(/\n\s*\n\s*\n/g, '\n\n').trim();
+		if (char === "'" || char === '"' || char === '`') {
+			stringQuote = char;
+			cleanedContent += char;
+			i++;
+			continue;
+		}
+
+		if (char === '/' && next === '*') {
+			const end = content.indexOf('*/', i + 2);
+			if (end === -1) {
+				cleanedContent += content.slice(i);
+				break;
+			}
+
+			const comment = content.slice(i, end + 2);
+			cleanedContent += isLicenseBlockComment(comment)
+				? blankComment(comment)
+				: comment;
+			i = end + 2;
+			continue;
+		}
+
+		if (char === '/' && next === '/') {
+			const end = content.indexOf('\n', i + 2);
+			const comment = end === -1 ? content.slice(i) : content.slice(i, end);
+			cleanedContent += isLicenseLineComment(comment)
+				? blankComment(comment)
+				: comment;
+			i += comment.length;
+			continue;
+		}
+
+		cleanedContent += char;
+		i++;
+	}
 
 	return cleanedContent;
 }
