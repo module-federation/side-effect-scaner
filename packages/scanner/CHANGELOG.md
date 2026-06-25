@@ -1,5 +1,11 @@
 # @module-federation/side-effect-scanner
 
+## 0.0.9
+
+### Patch Changes
+
+- fix: filter comment
+
 ## 0.0.8
 
 ### Patch Changes
